@@ -3,55 +3,52 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using JetBrains.Annotations;
 
 namespace Gulliver
 {
     /// <summary>
     ///     An unsigned big-endian integer aligned representation of a readonly fixed length enumerable of bytes.
     /// </summary>
-    [PublicAPI]
-    public class FixedBytes : IFormattable,
-                              IReadOnlyCollection<byte>,
-                              IEquatable<FixedBytes>,
-                              IEquatable<IEnumerable<byte>>,
-                              IComparable<FixedBytes>,
-                              IComparable<IEnumerable<byte>>,
-                              IComparable
+    [Obsolete("Candidate for removal in future major version")]
+    public class FixedBytes
+        : IFormattable,
+            IReadOnlyCollection<byte>,
+            IEquatable<FixedBytes>,
+            IEquatable<IEnumerable<byte>>,
+            IComparable<FixedBytes>,
+            IComparable<IEnumerable<byte>>,
+            IComparable
     {
         /// <summary>
-        ///     Underlying bytes, the hero of our journey
+        ///     Gets underlying bytes, the hero of our journey
         /// </summary>
         /// <value>
         ///     Underlying bytes
         /// </value>
-#pragma warning disable CA1819  // purposely ignore the returning of an array; extending classes need to be able to access the underlying array
         protected byte[] UnderlyingBytes { get; }
-#pragma warning restore CA1819
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="FixedBytes" /> class.
         /// </summary>
         /// <param name="bytes">the enumerable of bytes to be copied</param>
         /// <param name="length">the optional final </param>
-        public FixedBytes([NotNull] IEnumerable<byte> bytes,
-                          int? length = null)
+        public FixedBytes(IEnumerable<byte> bytes, int? length = null)
         {
             if (bytes == null)
             {
                 throw new ArgumentNullException(nameof(bytes));
             }
 
-            var byteArray = bytes is byte[] array
-                                ? array
-                                : bytes.ToArray();
+            var byteArray = bytes is byte[] array ? array : bytes.ToArray();
 
             var byteLength = byteArray.Length;
 
-            if (length.HasValue
-                && length.Value < byteLength)
+            if (length.HasValue && length.Value < byteLength)
             {
-                throw new ArgumentException($"When defined {nameof(length)} must not be less than the length of {nameof(bytes)}", nameof(length));
+                throw new ArgumentException(
+                    $"When defined {nameof(length)} must not be less than the length of {nameof(bytes)}",
+                    nameof(length)
+                );
             }
 
             this.UnderlyingBytes = new byte[length ?? byteLength]; // create a new array of appropriate size
@@ -68,10 +65,13 @@ namespace Gulliver
         /// </summary>
         /// <param name="idx">index</param>
         public byte this[int idx] =>
-            idx < this.UnderlyingBytes.Length
-            && idx >= 0
+            idx < this.UnderlyingBytes.Length && idx >= 0
                 ? this.UnderlyingBytes[idx]
-                : throw new ArgumentOutOfRangeException(nameof(idx), idx, $"provided index must be 0 or greater, and less than {this.UnderlyingBytes.Length}");
+                : throw new ArgumentOutOfRangeException(
+                    nameof(idx),
+                    idx,
+                    $"provided index must be 0 or greater, and less than {this.UnderlyingBytes.Length}"
+                );
 
         #region From Interface IComparable
 
@@ -89,8 +89,8 @@ namespace Gulliver
             }
 
             return obj is FixedBytes other
-                       ? this.CompareTo(other)
-                       : throw new ArgumentException($"Object must be of type {nameof(FixedBytes)}");
+                ? this.CompareTo(other)
+                : throw new ArgumentException($"Object must be of type {nameof(FixedBytes)}");
         }
 
         #endregion
@@ -100,9 +100,7 @@ namespace Gulliver
         /// <inheritdoc />
         public int CompareTo(FixedBytes other)
         {
-            return other == null
-                       ? 1
-                       : ByteArrayUtils.CompareUnsignedBigEndian(this.UnderlyingBytes, other.UnderlyingBytes);
+            return other == null ? 1 : ByteArrayUtils.CompareUnsignedBigEndian(this.UnderlyingBytes, other.UnderlyingBytes);
         }
 
         #endregion
@@ -113,11 +111,11 @@ namespace Gulliver
         public int CompareTo(IEnumerable<byte> other)
         {
             return other == null
-                       ? 1
-                       : ByteArrayUtils.CompareUnsignedBigEndian(this.UnderlyingBytes,
-                                                                 other is byte[] byteArray
-                                                                     ? byteArray
-                                                                     : other.ToArray());
+                ? 1
+                : ByteArrayUtils.CompareUnsignedBigEndian(
+                    this.UnderlyingBytes,
+                    other is byte[] byteArray ? byteArray : other.ToArray()
+                );
         }
 
         #endregion
@@ -137,9 +135,7 @@ namespace Gulliver
         /// <inheritdoc />
         public IEnumerator<byte> GetEnumerator()
         {
-            return this.UnderlyingBytes.ToList()
-                       .AsReadOnly()
-                       .GetEnumerator();
+            return this.UnderlyingBytes.ToList().AsReadOnly().GetEnumerator();
         }
 
         #endregion
@@ -149,9 +145,7 @@ namespace Gulliver
         /// <inheritdoc />
         public bool Equals(FixedBytes other)
         {
-            return !ReferenceEquals(null, other)
-                   && (ReferenceEquals(this, other)
-                       || this.Equals(other.UnderlyingBytes));
+            return !ReferenceEquals(null, other) && (ReferenceEquals(this, other) || this.Equals(other.UnderlyingBytes));
         }
 
         #endregion
@@ -162,11 +156,10 @@ namespace Gulliver
         public bool Equals(IEnumerable<byte> other)
         {
             return other != null
-                   && ByteArrayUtils.CompareUnsignedBigEndian(this.UnderlyingBytes,
-                                                              other is byte[] byteArray
-                                                                  ? byteArray
-                                                                  : other.ToArray())
-                   == 0;
+                && ByteArrayUtils.CompareUnsignedBigEndian(
+                    this.UnderlyingBytes,
+                    other is byte[] byteArray ? byteArray : other.ToArray()
+                ) == 0;
         }
 
         #endregion
@@ -216,23 +209,29 @@ namespace Gulliver
         /// </summary>
         /// <param name="format">the format</param>
         /// <param name="formatProvider">the format provider</param>
-        public string ToString(string format,
-                               IFormatProvider formatProvider)
+        /// <returns></returns>
+        public string ToString(string format, IFormatProvider formatProvider)
         {
             return this.UnderlyingBytes.ToString(format, formatProvider);
         }
 
         #endregion
 
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return this.ToString("G", CultureInfo.InvariantCulture);
+        }
+
         /// <summary>
         ///     Similar to <see cref="Equals(IEnumerable{byte})" />, but checks exact byte value (does not ignore 0 valued most
         ///     significant bytes)
         /// </summary>
         /// <param name="other">the value to compare to</param>
+        /// <returns></returns>
         public bool Exactly(IEnumerable<byte> other)
         {
-            return other != null
-                   && this.UnderlyingBytes.SequenceEqual(other);
+            return other != null && this.UnderlyingBytes.SequenceEqual(other);
         }
 
         /// <summary>
@@ -240,17 +239,17 @@ namespace Gulliver
         ///     significant bytes)
         /// </summary>
         /// <param name="other">the value to compare to</param>
+        /// <returns></returns>
         public bool Exactly(FixedBytes other)
         {
-            return !ReferenceEquals(null, other)
-                   && (ReferenceEquals(this, other)
-                       || this.Exactly(other.UnderlyingBytes));
+            return !ReferenceEquals(null, other) && (ReferenceEquals(this, other) || this.Exactly(other.UnderlyingBytes));
         }
 
         /// <summary>
         ///     Get a copy of the bytes as little-endian (least significant byte at 0th index)
         ///     intrinsically reversing the bytes
         /// </summary>
+        /// <returns></returns>
         public byte[] GetBytesLittleEndian()
         {
             return this.UnderlyingBytes.ReverseBytes();
@@ -259,26 +258,21 @@ namespace Gulliver
         /// <summary>
         ///     Creates a new instance of an empty <see cref="FixedBytes" />
         /// </summary>
+        /// <returns></returns>
         public static FixedBytes Empty()
         {
-            return Array.Empty<byte>()
-                        .ToFixedBytes();
+            return Array.Empty<byte>().ToFixedBytes();
         }
 
         /// <summary>
         ///     Get a copy of the bytes
         /// </summary>
+        /// <returns></returns>
         public byte[] GetBytes()
         {
             var destinationArray = new byte[this.UnderlyingBytes.Length];
             Array.Copy(this.UnderlyingBytes, destinationArray, this.UnderlyingBytes.Length);
             return destinationArray;
-        }
-
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            return this.ToString("G", CultureInfo.InvariantCulture);
         }
 
         #region Equality
@@ -287,25 +281,20 @@ namespace Gulliver
         public override bool Equals(object obj)
         {
             return !ReferenceEquals(null, obj)
-                   && (ReferenceEquals(this, obj)
-                       || (obj.GetType() == GetType() && this.Equals((FixedBytes)obj)));
+                && (ReferenceEquals(this, obj) || (obj.GetType() == GetType() && this.Equals((FixedBytes)obj)));
         }
 
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            return this.UnderlyingBytes != null
-                       ? ByteHash()
-                       : 0;
+            return this.UnderlyingBytes != null ? ByteHash() : 0;
 
             int ByteHash()
             {
                 // unchecked to avoid overflow of addition / multiplication operations
                 unchecked
                 {
-                    return this.UnderlyingBytes.Aggregate(19,
-                                                          (current,
-                                                           b) => (current * 31) + b.GetHashCode());
+                    return this.UnderlyingBytes.Aggregate(19, (current, b) => (current * 31) + b.GetHashCode());
                 }
             }
         }
@@ -326,17 +315,6 @@ namespace Gulliver
         }
 
         /// <summary>
-        ///     Explicit conversion of <see cref="byte" /> array to <see cref="FixedBytes" />
-        /// </summary>
-        /// <param name="bytes">the source bytes</param>
-        public static FixedBytes ToFixedBytes(byte[] bytes)
-        {
-            return bytes == null
-                       ? null
-                       : new FixedBytes(bytes);
-        }
-
-        /// <summary>
         ///     Explicit conversion of <see cref="byte" /> List to <see cref="FixedBytes" />
         /// </summary>
         /// <param name="bytes">the source bytes</param>
@@ -346,14 +324,23 @@ namespace Gulliver
         }
 
         /// <summary>
+        ///     Explicit conversion of <see cref="byte" /> array to <see cref="FixedBytes" />
+        /// </summary>
+        /// <param name="bytes">the source bytes</param>
+        /// <returns></returns>
+        public static FixedBytes ToFixedBytes(byte[] bytes)
+        {
+            return bytes == null ? null : new FixedBytes(bytes);
+        }
+
+        /// <summary>
         ///     Explicit conversion of <see cref="byte" /> List to <see cref="FixedBytes" />
         /// </summary>
         /// <param name="bytes">the source bytes</param>
+        /// <returns></returns>
         public static FixedBytes ToFixedBytes(List<byte> bytes)
         {
-            return bytes == null
-                       ? null
-                       : new FixedBytes(bytes);
+            return bytes == null ? null : new FixedBytes(bytes);
         }
 
         #endregion
@@ -373,11 +360,10 @@ namespace Gulliver
         ///     Conversion from <see cref="FixedBytes" /> to <see cref="byte" /> array
         /// </summary>
         /// <param name="fixedBytes">input</param>
+        /// <returns></returns>
         public static byte[] FromFixedBytes(FixedBytes fixedBytes)
         {
-            return fixedBytes == null
-                       ? null
-                       : fixedBytes.GetBytes();
+            return fixedBytes == null ? null : fixedBytes.GetBytes();
         }
 
         #endregion
@@ -389,8 +375,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes operator +(FixedBytes left,
-                                            FixedBytes right)
+        public static FixedBytes operator +(FixedBytes left, FixedBytes right)
         {
             return Add(left, right);
         }
@@ -400,17 +385,15 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes Add(FixedBytes left,
-                                     FixedBytes right)
+        /// <returns></returns>
+        public static FixedBytes Add(FixedBytes left, FixedBytes right)
         {
-            if (left == null
-                || right == null)
+            if (left == null || right == null)
             {
                 return null;
             }
 
-            return ByteArrayUtils.AddUnsignedBigEndian(left.UnderlyingBytes, right.UnderlyingBytes)
-                                 .ToFixedBytes();
+            return ByteArrayUtils.AddUnsignedBigEndian(left.UnderlyingBytes, right.UnderlyingBytes).ToFixedBytes();
         }
 
         /// <summary>
@@ -418,8 +401,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes operator -(FixedBytes left,
-                                            FixedBytes right)
+        public static FixedBytes operator -(FixedBytes left, FixedBytes right)
         {
             return Subtract(left, right);
         }
@@ -429,17 +411,15 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes Subtract(FixedBytes left,
-                                          FixedBytes right)
+        /// <returns></returns>
+        public static FixedBytes Subtract(FixedBytes left, FixedBytes right)
         {
-            if (left == null
-                || right == null)
+            if (left == null || right == null)
             {
                 return null;
             }
 
-            return ByteArrayUtils.SubtractUnsignedBigEndian(left.UnderlyingBytes, right.UnderlyingBytes)
-                                 .ToFixedBytes();
+            return ByteArrayUtils.SubtractUnsignedBigEndian(left.UnderlyingBytes, right.UnderlyingBytes).ToFixedBytes();
         }
 
         #endregion
@@ -451,8 +431,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes operator |(FixedBytes left,
-                                            FixedBytes right)
+        public static FixedBytes operator |(FixedBytes left, FixedBytes right)
         {
             return BitwiseOr(left, right);
         }
@@ -462,17 +441,15 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes BitwiseOr(FixedBytes left,
-                                           FixedBytes right)
+        /// <returns></returns>
+        public static FixedBytes BitwiseOr(FixedBytes left, FixedBytes right)
         {
-            if (left == null
-                || right == null)
+            if (left == null || right == null)
             {
                 return null;
             }
 
-            return ByteArrayUtils.BitwiseOrBigEndian(left.UnderlyingBytes, right.GetBytes())
-                                 .ToFixedBytes();
+            return ByteArrayUtils.BitwiseOrBigEndian(left.UnderlyingBytes, right.GetBytes()).ToFixedBytes();
         }
 
         /// <summary>
@@ -480,8 +457,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes operator &(FixedBytes left,
-                                            FixedBytes right)
+        public static FixedBytes operator &(FixedBytes left, FixedBytes right)
         {
             return BitwiseAnd(left, right);
         }
@@ -491,17 +467,15 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes BitwiseAnd(FixedBytes left,
-                                            FixedBytes right)
+        /// <returns></returns>
+        public static FixedBytes BitwiseAnd(FixedBytes left, FixedBytes right)
         {
-            if (left == null
-                || right == null)
+            if (left == null || right == null)
             {
                 return null;
             }
 
-            return ByteArrayUtils.BitwiseAndBigEndian(left.UnderlyingBytes, right.GetBytes())
-                                 .ToFixedBytes();
+            return ByteArrayUtils.BitwiseAndBigEndian(left.UnderlyingBytes, right.GetBytes()).ToFixedBytes();
         }
 
         /// <summary>
@@ -509,8 +483,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes operator ^(FixedBytes left,
-                                            FixedBytes right)
+        public static FixedBytes operator ^(FixedBytes left, FixedBytes right)
         {
             return Xor(left, right);
         }
@@ -520,17 +493,15 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static FixedBytes Xor(FixedBytes left,
-                                     FixedBytes right)
+        /// <returns></returns>
+        public static FixedBytes Xor(FixedBytes left, FixedBytes right)
         {
-            if (left == null
-                || right == null)
+            if (left == null || right == null)
             {
                 return null;
             }
 
-            return ByteArrayUtils.BitwiseXorBigEndian(left.UnderlyingBytes, right.GetBytes())
-                                 .ToFixedBytes();
+            return ByteArrayUtils.BitwiseXorBigEndian(left.UnderlyingBytes, right.GetBytes()).ToFixedBytes();
         }
 
         /// <summary>
@@ -546,6 +517,7 @@ namespace Gulliver
         ///     Logical Not
         /// </summary>
         /// <param name="operand">the operand</param>
+        /// <returns></returns>
         public static FixedBytes LogicalNot(FixedBytes operand)
         {
             if (operand == null)
@@ -553,8 +525,7 @@ namespace Gulliver
                 return null;
             }
 
-            return ByteArrayUtils.BitwiseNot(operand.UnderlyingBytes)
-                                 .ToFixedBytes();
+            return ByteArrayUtils.BitwiseNot(operand.UnderlyingBytes).ToFixedBytes();
         }
 
         /// <summary>
@@ -562,8 +533,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="fixedBytes">input</param>
         /// <param name="shift">the shift count</param>
-        public static FixedBytes operator <<(FixedBytes fixedBytes,
-                                             int shift)
+        public static FixedBytes operator <<(FixedBytes fixedBytes, int shift)
         {
             return LeftShift(fixedBytes, shift);
         }
@@ -573,8 +543,8 @@ namespace Gulliver
         /// </summary>
         /// <param name="fixedBytes">input</param>
         /// <param name="shift">the shift count</param>
-        public static FixedBytes LeftShift(FixedBytes fixedBytes,
-                                           int shift)
+        /// <returns></returns>
+        public static FixedBytes LeftShift(FixedBytes fixedBytes, int shift)
         {
             if (fixedBytes == null)
             {
@@ -586,8 +556,7 @@ namespace Gulliver
                 throw new ArgumentOutOfRangeException(nameof(shift), $"{nameof(shift)} must be 0 or greater");
             }
 
-            return fixedBytes.UnderlyingBytes.ShiftBitsLeft(shift)
-                             .ToFixedBytes();
+            return fixedBytes.UnderlyingBytes.ShiftBitsLeft(shift).ToFixedBytes();
         }
 
         /// <summary>
@@ -595,8 +564,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="fixedBytes">input</param>
         /// <param name="shift">the shift count</param>
-        public static FixedBytes operator >>(FixedBytes fixedBytes,
-                                             int shift)
+        public static FixedBytes operator >>(FixedBytes fixedBytes, int shift)
         {
             return RightShift(fixedBytes, shift);
         }
@@ -606,8 +574,8 @@ namespace Gulliver
         /// </summary>
         /// <param name="fixedBytes">input</param>
         /// <param name="shift">the shift count</param>
-        public static FixedBytes RightShift(FixedBytes fixedBytes,
-                                            int shift)
+        /// <returns></returns>
+        public static FixedBytes RightShift(FixedBytes fixedBytes, int shift)
         {
             if (fixedBytes == null)
             {
@@ -619,8 +587,7 @@ namespace Gulliver
                 throw new ArgumentOutOfRangeException(nameof(shift), $"{nameof(shift)} must be 0 or greater");
             }
 
-            return fixedBytes.UnderlyingBytes.ShiftBitsRight(shift)
-                             .ToFixedBytes();
+            return fixedBytes.UnderlyingBytes.ShiftBitsRight(shift).ToFixedBytes();
         }
 
         #endregion
@@ -632,8 +599,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator <(FixedBytes left,
-                                      FixedBytes right)
+        public static bool operator <(FixedBytes left, FixedBytes right)
         {
             return Comparer<FixedBytes>.Default.Compare(left, right) < 0;
         }
@@ -643,8 +609,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator >(FixedBytes left,
-                                      FixedBytes right)
+        public static bool operator >(FixedBytes left, FixedBytes right)
         {
             return Comparer<FixedBytes>.Default.Compare(left, right) > 0;
         }
@@ -654,8 +619,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator <=(FixedBytes left,
-                                       FixedBytes right)
+        public static bool operator <=(FixedBytes left, FixedBytes right)
         {
             return Comparer<FixedBytes>.Default.Compare(left, right) <= 0;
         }
@@ -665,8 +629,7 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator >=(FixedBytes left,
-                                       FixedBytes right)
+        public static bool operator >=(FixedBytes left, FixedBytes right)
         {
             return Comparer<FixedBytes>.Default.Compare(left, right) >= 0;
         }
@@ -680,11 +643,9 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator ==(FixedBytes left,
-                                       FixedBytes right)
+        public static bool operator ==(FixedBytes left, FixedBytes right)
         {
-            return ReferenceEquals(left, right)
-                   || (left?.Equals(right) ?? false);
+            return ReferenceEquals(left, right) || (left?.Equals(right) ?? false);
         }
 
         /// <summary>
@@ -692,11 +653,9 @@ namespace Gulliver
         /// </summary>
         /// <param name="left">the left side operand</param>
         /// <param name="right">the right side operand</param>
-        public static bool operator !=(FixedBytes left,
-                                       FixedBytes right)
+        public static bool operator !=(FixedBytes left, FixedBytes right)
         {
-            return !ReferenceEquals(left, right)
-                   && !(left?.Equals(right) ?? false);
+            return !ReferenceEquals(left, right) && !(left?.Equals(right) ?? false);
         }
 
         #endregion
